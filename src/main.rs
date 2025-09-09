@@ -1,24 +1,28 @@
 use std::{process::Command, thread::sleep, time::Duration};
-use windows::Win32::UI::WindowsAndMessaging::{SetWindowPos, SWP_SHOWWINDOW};
-use windows::Win32::Foundation::HWND;
+use windows::core::BOOL;
+use windows::Win32::UI::WindowsAndMessaging::{EnumWindows, GetWindowTextW, IsWindowVisible, SetWindowPos, SWP_SHOWWINDOW, WNDENUMPROC};
+use windows::Win32::Foundation::{HWND, LPARAM};
 
 
 fn grid_all_windows() {
-	let chrome_windows: Vec<_> = x_win::get_open_windows().unwrap().into_iter()
-		.filter(|w| w.title.contains("Chrome"))
-		.collect();
+	// let chrome_windows: Vec<_> = x_win::get_open_windows().unwrap().into_iter()
+	// 	.filter(|w| w.title.contains("Chrome"))
+	// 	.collect();
 
-	if chrome_windows.is_empty() {
-		eprintln!("No chrome windows");
-		return;
-	}
+
+
+
+	// if chrome_windows.is_empty() {
+	// 	eprintln!("No chrome windows");
+	// 	return;
+	// }
 
 	// for w in chrome_windows {
 	// 	println!("{}", w.title);
 	// }
-	let count = chrome_windows.len();
-	let cols = (count as f64).sqrt().ceil() as i32;
-	let rows = ((count as f64) / cols as f64).ceil() as i32;
+	// let count = chrome_windows.len();
+	// let cols = (count as f64).sqrt().ceil() as i32;
+	// let rows = ((count as f64) / cols as f64).ceil() as i32;
 
 	println!("r{rows}c{cols}");
 
@@ -29,8 +33,8 @@ fn grid_all_windows() {
 
 	println!("{screen_w}x{screen_h}");
 
-	let cell_w = screen_w / cols;
-	let cell_h = screen_h / rows;
+	// let cell_w = screen_w / cols;
+	// let cell_h = screen_h / rows;
 
 	// for (i, win) in chrome_windows.into_iter().enumerate() {
 	// 	let hwnd = HWND(win.id as isize);
@@ -46,9 +50,22 @@ fn grid_all_windows() {
 	
 }
 
+unsafe extern "system" fn enum_windows_proc(hwnd: HWND, lparam: LPARAM) -> BOOL {
+	let buf = [0u16; 512];
+	let len = GetWindowTextW(hwnd, &mut buf);
+
+	if len > 0 && IsWindowVisible(hwnd).as_bool() {
+		println!("hel");
+	}
+	return BOOL(1);
+}
+
 fn main() {
 	const URL: &str = "https://www.youtube.com/shorts";
 	let args = ["/c", "C:\\Program Files (x86)\\Google\\Chrome\\Application\\chrome", "--new-window", URL];
+
+	let all_windows: Vec<HWND> = Vec::new();
+	// EnumWindows(Some(enum_windows_proc), LPARAM(&mut all_windows as *mut _ as isize))
 
 	Command::new("cmd")
 		.args(args)
