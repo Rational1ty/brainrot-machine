@@ -1,30 +1,32 @@
-use tao::{dpi::{LogicalPosition, LogicalSize, PhysicalPosition}, event::{Event, WindowEvent}, event_loop::{ControlFlow, EventLoop}, platform::windows::WindowBuilderExtWindows, window::WindowBuilder};
+use tao::{dpi::{LogicalPosition, LogicalSize, PhysicalPosition}, event::{Event, WindowEvent}, event_loop::{ControlFlow, EventLoop}, window::WindowBuilder};
 use wry::WebViewBuilder;
 
+const URL: &str = "https://youtube.com/shorts";
+const N: i32 = 3;
+const COLS: i32 = 6;
+
+// nominal values (assuming 1920x1080, 1.0 scale) for width/height of grid cells
+const NOM_W: i32 = 316;
+const NOM_H: i32 = 616;
+
+const YT_NAV_H: i32 = 80;
 
 fn main() {
 	let event_loop = EventLoop::new();
 	let mut wvs = Vec::new();
 	let mut wins = Vec::new();
 
-	let primary = event_loop.primary_monitor().unwrap();
-	let ssize = primary.scale_factor();
-	eprintln!("ssize = {:?}", ssize);
+	let primary_monitor = event_loop.primary_monitor().unwrap();
+	let scale_factor = primary_monitor.scale_factor();
 
-	let url = "https://youtube.com/shorts";
-	let n = 3;
-	let cols = 6;
-	let cell_w = 316;
-	let cell_h = 616;
-	let scl_cell_w = 210;
-	let scl_cell_h = 410;
-	let yt_nav_h = 80;
+	let scl_cell_w = NOM_W as f64 * scale_factor;
+	let scl_cell_h = NOM_H as f64 * scale_factor;
 
-	for i in 0..n {
-		let col = i % cols;
-		let row = i / cols;
-		let x = (col * cell_w) as i32;
-		let y = (row * cell_h) as i32;
+	for i in 0..N {
+		let col = i % COLS;
+		let row = i / COLS;
+		let x = (col * NOM_W) as i32;
+		let y = (row * NOM_H) as i32;
 
 		let window = WindowBuilder::new()
 			.with_title(format!("Grid {i}"))
@@ -34,18 +36,18 @@ fn main() {
 			.build(&event_loop)
 			.unwrap();
 		
-		let y_off = (row + 1) * yt_nav_h;
+		let y_off = (row + 1) * YT_NAV_H;
 		window.set_outer_position(PhysicalPosition::new(x, y - y_off));
 		if row == 0 {
 			window.set_always_on_top(true);
 		}
 
 		let wv = WebViewBuilder::new()
-			.with_url(url)
+			.with_url(URL)
 			.build(&window)
 			.unwrap();
 
-		wv.zoom(0.67).unwrap();
+		wv.zoom(1.0 / scale_factor).unwrap();
 
 		wvs.push(wv);
 		wins.push(window);
