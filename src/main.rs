@@ -1,3 +1,6 @@
+use std::{sync::{atomic::{AtomicBool, Ordering}, Arc}, thread};
+
+use rdev::{EventType, Key};
 use tao::{dpi::{LogicalPosition, LogicalSize, PhysicalPosition}, event::{Event, WindowEvent}, event_loop::{ControlFlow, EventLoop}, window::WindowBuilder};
 use wry::WebViewBuilder;
 
@@ -12,6 +15,18 @@ const NOM_H: i32 = 616;
 const YT_NAV_H: i32 = 80;
 
 fn main() {
+	let quit_flag = Arc::new(AtomicBool::new(false));
+	let thread_quit_flag = quit_flag.clone();
+
+	thread::spawn(move || {
+		rdev::listen(move |e| {
+			if let EventType::KeyPress(Key::KeyQ) = e.event_type {
+				eprintln!("q pressed");
+				thread_quit_flag.store(true, Ordering::SeqCst);
+			}
+		}).unwrap();
+	});
+
 	let event_loop = EventLoop::new();
 	let mut wvs = Vec::new();
 	let mut wins = Vec::new();
@@ -53,30 +68,30 @@ fn main() {
 		wins.push(window);
 	}
 
-	// Run until the user closes all windows
 	event_loop.run(move |event, _, control_flow| {
-		*control_flow = ControlFlow::Wait;
+		*control_flow = ControlFlow::Poll;
+
 		match event {
 			Event::WindowEvent {
 				window_id,
 				event: WindowEvent::Resized(size),
 				..
 			} => {
-				println!(
-					"Window {:?} resized to {} x {}",
-					window_id,
-					size.width,
-					size.height
-				);
-			}
-			Event::WindowEvent {
-				event: WindowEvent::CloseRequested,
-				..
-			} => {
+				println!("Window {:?} resized to {} x {}", window_id, size.width, size.height);
+			},
+
+			Event::WindowEvent { event: WindowEvent::CloseRequested, .. } => {
 				*control_flow = ControlFlow::Exit;
+			},
+
+			Event::MainEventsCleared => {
+				if quit_flag.load(Ordering::SeqCst) {
+					println!("Quitting");
+					*control_flow = ControlFlow::Exit;
+				}
 			}
+
 			_ => {}
 		}
 	});
 }
-
