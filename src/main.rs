@@ -8,7 +8,6 @@ fn main() {
 
 	let url = "https://youtube.com/shorts";
 	let n = 12;
-	let rows = 2;
 	let cols = 6;
 	let cell_w = 316;
 	let cell_h = 616;
