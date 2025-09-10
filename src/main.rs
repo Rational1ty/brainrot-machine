@@ -1,11 +1,11 @@
-use std::{sync::{atomic::{AtomicBool, Ordering}, Arc}, thread};
+use std::{sync::{atomic::{AtomicBool, Ordering}, Arc}, thread, time::Duration};
 
 use rdev::{EventType, Key};
 use tao::{dpi::{LogicalPosition, LogicalSize, PhysicalPosition}, event::{Event, WindowEvent}, event_loop::{ControlFlow, EventLoop}, window::WindowBuilder};
 use wry::WebViewBuilder;
 
 const URL: &str = "https://youtube.com/shorts";
-const N: i32 = 3;
+const N: i32 = 6;
 const COLS: i32 = 6;
 
 // nominal values (assuming 1920x1080, 1.0 scale) for width/height of grid cells
@@ -21,7 +21,6 @@ fn main() {
 	thread::spawn(move || {
 		rdev::listen(move |e| {
 			if let EventType::KeyPress(Key::KeyQ) = e.event_type {
-				eprintln!("q pressed");
 				thread_quit_flag.store(true, Ordering::SeqCst);
 			}
 		}).unwrap();
@@ -86,10 +85,18 @@ fn main() {
 
 			Event::MainEventsCleared => {
 				if quit_flag.load(Ordering::SeqCst) {
-					println!("Quitting");
+					println!("quitting");
 					*control_flow = ControlFlow::Exit;
 				}
-			}
+				if rand::random_bool(0.0001) {
+					let i = rand::random_range(0..N) as usize;
+					println!("lucky {i}");
+					wins[i].set_focus();
+					thread::sleep(Duration::from_millis(100));
+					rdev::simulate(&EventType::KeyPress(Key::DownArrow)).unwrap();
+					rdev::simulate(&EventType::KeyRelease(Key::DownArrow)).unwrap();
+				}
+			},
 
 			_ => {}
 		}
