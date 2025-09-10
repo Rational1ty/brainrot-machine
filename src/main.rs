@@ -1,4 +1,4 @@
-use tao::{dpi::{LogicalPosition, LogicalSize}, event::{Event, WindowEvent}, event_loop::{ControlFlow, EventLoop}, window::WindowBuilder};
+use tao::{dpi::{LogicalPosition, LogicalSize, PhysicalPosition}, event::{Event, WindowEvent}, event_loop::{ControlFlow, EventLoop}, window::WindowBuilder};
 use wry::WebViewBuilder;
 
 fn main() {
@@ -7,10 +7,12 @@ fn main() {
 	let mut wins = Vec::new();
 
 	let url = "https://youtube.com/shorts";
-	let n = 1;
-	let cols = 4;
-	let cell_w = 640;
-	let cell_h = 360;
+	let n = 12;
+	let rows = 2;
+	let cols = 6;
+	let cell_w = 316;
+	let cell_h = 616;
+	let yt_nav_h = 80;
 
 	for i in 0..n {
 		let col = i % cols;
@@ -25,6 +27,12 @@ fn main() {
 			.with_decorations(false)  // seamless
 			.build(&event_loop)
 			.unwrap();
+		
+		let y_off = (row + 1) * yt_nav_h;
+		window.set_outer_position(PhysicalPosition::new(x, y - y_off));
+		if row == 0 {
+			window.set_always_on_top(true);
+		}
 
 		let wv = WebViewBuilder::new()
 			.with_url(url)
@@ -39,6 +47,18 @@ fn main() {
 	event_loop.run(move |event, _, control_flow| {
 		*control_flow = ControlFlow::Wait;
 		match event {
+			Event::WindowEvent {
+				window_id,
+				event: WindowEvent::Resized(size),
+				..
+			} => {
+				println!(
+					"Window {:?} resized to {} x {}",
+					window_id,
+					size.width,
+					size.height
+				);
+			}
 			Event::WindowEvent {
 				event: WindowEvent::CloseRequested,
 				..
