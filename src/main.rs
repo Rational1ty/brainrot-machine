@@ -1,16 +1,23 @@
-use tao::{dpi::{LogicalPosition, LogicalSize, PhysicalPosition}, event::{Event, WindowEvent}, event_loop::{ControlFlow, EventLoop}, window::WindowBuilder};
+use tao::{dpi::{LogicalPosition, LogicalSize, PhysicalPosition}, event::{Event, WindowEvent}, event_loop::{ControlFlow, EventLoop}, platform::windows::WindowBuilderExtWindows, window::WindowBuilder};
 use wry::WebViewBuilder;
+
 
 fn main() {
 	let event_loop = EventLoop::new();
 	let mut wvs = Vec::new();
 	let mut wins = Vec::new();
 
+	let primary = event_loop.primary_monitor().unwrap();
+	let ssize = primary.scale_factor();
+	eprintln!("ssize = {:?}", ssize);
+
 	let url = "https://youtube.com/shorts";
-	let n = 12;
+	let n = 3;
 	let cols = 6;
 	let cell_w = 316;
 	let cell_h = 616;
+	let scl_cell_w = 210;
+	let scl_cell_h = 410;
 	let yt_nav_h = 80;
 
 	for i in 0..n {
@@ -21,9 +28,9 @@ fn main() {
 
 		let window = WindowBuilder::new()
 			.with_title(format!("Grid {i}"))
-			.with_inner_size(LogicalSize::new(cell_w, cell_h))
+			.with_inner_size(LogicalSize::new(scl_cell_w, scl_cell_h))
 			.with_position(LogicalPosition::new(x, y))
-			.with_decorations(false)  // seamless
+			.with_decorations(false)
 			.build(&event_loop)
 			.unwrap();
 		
@@ -37,6 +44,8 @@ fn main() {
 			.with_url(url)
 			.build(&window)
 			.unwrap();
+
+		wv.zoom(0.67).unwrap();
 
 		wvs.push(wv);
 		wins.push(window);
