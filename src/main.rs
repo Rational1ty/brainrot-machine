@@ -5,7 +5,7 @@ use tao::{dpi::{LogicalPosition, LogicalSize, PhysicalPosition}, event::{Event, 
 use wry::WebViewBuilder;
 
 const URL: &str = "https://youtube.com/shorts";
-const N: i32 = 6;
+const N: i32 = 12;
 const COLS: i32 = 6;
 
 // nominal values (assuming 1920x1080, 1.0 scale) for width/height of grid cells
@@ -33,8 +33,8 @@ fn main() {
 	let primary_monitor = event_loop.primary_monitor().unwrap();
 	let scale_factor = primary_monitor.scale_factor();
 
-	let scl_cell_w = NOM_W as f64 * scale_factor;
-	let scl_cell_h = NOM_H as f64 * scale_factor;
+	let scl_cell_w = NOM_W as f64 / scale_factor;
+	let scl_cell_h = NOM_H as f64 / scale_factor;
 
 	for i in 0..N {
 		let col = i % COLS;
