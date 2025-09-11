@@ -64,7 +64,7 @@ fn main() {
 		wv.zoom(1.0 / scale_factor).unwrap();
 
 		wvs.push(wv);
-		wins.push(window);
+		wins.push(Arc::new(window));
 	}
 
 	event_loop.run(move |event, _, control_flow| {
@@ -88,13 +88,18 @@ fn main() {
 					println!("quitting");
 					*control_flow = ControlFlow::Exit;
 				}
+
 				if rand::random_bool(0.0001) {
 					let i = rand::random_range(0..N) as usize;
-					println!("lucky {i}");
-					wins[i].set_focus();
-					thread::sleep(Duration::from_millis(100));
-					rdev::simulate(&EventType::KeyPress(Key::DownArrow)).unwrap();
-					rdev::simulate(&EventType::KeyRelease(Key::DownArrow)).unwrap();
+					let w = wins[i].clone();
+
+					thread::spawn(move || {
+						println!("lucky {i}");
+						w.set_focus();
+						thread::sleep(Duration::from_millis(200));
+						rdev::simulate(&EventType::KeyPress(Key::DownArrow)).unwrap();
+						rdev::simulate(&EventType::KeyRelease(Key::DownArrow)).unwrap();
+					});
 				}
 			},
 
