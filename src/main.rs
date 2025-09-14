@@ -90,7 +90,7 @@ fn main() {
 					*control_flow = ControlFlow::Exit;
 				}
 
-				if rand::random_bool(0.0001) {
+				if rand::random_bool(0.001) {
 					let i = rand::random_range(0..N) as usize;
 					let w = wins[i].clone();
 
