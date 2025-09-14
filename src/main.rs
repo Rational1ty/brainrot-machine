@@ -1,5 +1,6 @@
 use std::{sync::{atomic::{AtomicBool, Ordering}, Arc}, thread, time::Duration};
 
+use device_query::{DeviceEvents, DeviceEventsHandler, Keycode};
 use rdev::{EventType, Key};
 use tao::{dpi::{LogicalPosition, LogicalSize, PhysicalPosition}, event::{Event, WindowEvent}, event_loop::{ControlFlow, EventLoop}, window::WindowBuilder};
 use wry::WebViewBuilder;
@@ -18,12 +19,12 @@ fn main() {
 	let quit_flag = Arc::new(AtomicBool::new(false));
 	let thread_quit_flag = quit_flag.clone();
 
-	thread::spawn(move || {
-		rdev::listen(move |e| {
-			if let EventType::KeyPress(Key::KeyQ) = e.event_type {
-				thread_quit_flag.store(true, Ordering::SeqCst);
-			}
-		}).unwrap();
+	let key_event_handler = DeviceEventsHandler::new(Duration::from_millis(10)).unwrap();
+	let _key_listener = key_event_handler.on_key_down(move |keycode| {
+		if keycode == &Keycode::Q {
+			println!("q pressed");
+			thread_quit_flag.store(true, Ordering::SeqCst);
+		}
 	});
 
 	let event_loop = EventLoop::new();
