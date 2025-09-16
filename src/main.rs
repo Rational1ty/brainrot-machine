@@ -5,15 +5,17 @@ use rdev::{EventType, Key};
 use tao::{dpi::{LogicalPosition, LogicalSize, PhysicalPosition}, event::{Event, WindowEvent}, event_loop::{ControlFlow, EventLoop}, window::WindowBuilder};
 use wry::WebViewBuilder;
 
-const URL: &str = "https://youtube.com/shorts";
-const N: i32 = 12;
-const COLS: i32 = 6;
+const YT_URL: &str = "https://youtube.com/shorts";
+const IG_URL: &str = "https://instagram.com/reels";
+const N: i32 = 24;
 
 // nominal values (assuming 1920x1080, 1.0 scale) for width/height of grid cells
-const NOM_W: i32 = 316;
-const NOM_H: i32 = 616;
+const YT_CELL_W: i32 = 316;
+const YT_CELL_H: i32 = 616;
+const IG_CELL_W: i32 = 400;
+const IG_CELL_H: i32 = 540;
 
-const YT_NAV_H: i32 = 80;
+const NAV_H: i32 = 80;
 
 fn main() {
 	let quit_flag = Arc::new(AtomicBool::new(false));
@@ -34,14 +36,53 @@ fn main() {
 	let primary_monitor = event_loop.primary_monitor().unwrap();
 	let scale_factor = primary_monitor.scale_factor();
 
-	let scl_cell_w = NOM_W as f64 / scale_factor;
-	let scl_cell_h = NOM_H as f64 / scale_factor;
+	let monitor_height = primary_monitor.size().height as i32;
+	let monitor_width = primary_monitor.size().width as i32;
 
+	let mut x = 0;
+	let mut y : i32;
+
+	let mut row = 0;
+	let mut nom_w = 0;
+	let mut num_screens = N;
+	
 	for i in 0..N {
-		let col = i % COLS;
-		let row = i / COLS;
-		let x = (col * NOM_W) as i32;
-		let y = (row * NOM_H) as i32;
+		x = (x + nom_w) as i32; // increment x by previous cell width
+		// Alternate between Youtube Shorts and Instagram Reels
+		let nom_h : i32;
+		let url : &str;
+		if i % 2 == 0 {
+			nom_w = YT_CELL_W;
+			nom_h = YT_CELL_H;
+			url = YT_URL;
+		} else {
+			nom_w = IG_CELL_W;
+			nom_h = IG_CELL_H;
+			url = IG_URL;
+		}
+		
+		// If the next cell would exceed the monitor width, reset x and increment row
+		if x >= monitor_width {
+			x = 0;
+			row += 1;
+		}
+
+		// Calculate y based on height of the current cell type
+		if i % 2 == 0 {
+			y = row * YT_CELL_H;
+		} else {
+			y = row * IG_CELL_H;
+		}
+
+		// If y exceeds monitor height, stop creating more windows
+		if y - nom_h > monitor_height {
+			println!("Screen has been filled to maximum capacity");
+			num_screens = i;
+			break;
+		}
+
+		let scl_cell_w = nom_w as f64 / scale_factor;
+		let scl_cell_h = nom_h as f64 / scale_factor;
 
 		let window = WindowBuilder::new()
 			.with_title(format!("Grid {i}"))
@@ -51,14 +92,14 @@ fn main() {
 			.build(&event_loop)
 			.unwrap();
 		
-		let y_off = (row + 1) * YT_NAV_H;
+		let y_off = (row + 1) * NAV_H;
 		window.set_outer_position(PhysicalPosition::new(x, y - y_off));
 		if row == 0 {
 			window.set_always_on_top(true);
 		}
 
 		let wv = WebViewBuilder::new()
-			.with_url(URL)
+			.with_url(url)
 			.build(&window)
 			.unwrap();
 
@@ -91,7 +132,7 @@ fn main() {
 				}
 
 				if rand::random_bool(0.001) {
-					let i = rand::random_range(0..N) as usize;
+					let i = rand::random_range(0..num_screens) as usize;
 					let w = wins[i].clone();
 
 					thread::spawn(move || {
