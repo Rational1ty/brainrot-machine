@@ -47,7 +47,7 @@ fn main() {
 	let mut num_screens = N;
 	
 	for i in 0..N {
-		x = x + nom_w; // increment x by previous cell width
+		x = (x + nom_w) as i32; // increment x by previous cell width
 		// Alternate between Youtube Shorts and Instagram Reels
 		let nom_h : i32;
 		let url : &str;
