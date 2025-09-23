@@ -37,6 +37,8 @@ fn main() {
 	let primary_monitor = event_loop.primary_monitor().unwrap();
 	let scale_factor = primary_monitor.scale_factor();
 
+	let monitor_width = primary_monitor.size().width as i32;
+	let monitor_height = primary_monitor.size().height as i32;
 	let mut x = 0;
 	let mut num_windows = N;
 
@@ -49,13 +51,13 @@ fn main() {
 		};
 
 		// Total width of all windows that have been created divided by the monitor width
-		let row: i32 = (i / 2 * (YT_CELL_W + IG_CELL_W) + (i % 2 * YT_CELL_W)) / primary_monitor.size().width as i32;
+		let row: i32 = (i / 2 * (YT_CELL_W + IG_CELL_W) + (i % 2 * YT_CELL_W)) / monitor_width;
 
 		// Calculate y based on height of the current cell type
 		let y: i32 = if i % 2 == 0 { row * YT_CELL_H } else { row * IG_CELL_H };
 
 		// If y exceeds monitor height, stop creating more windows
-		if y - nom_h > primary_monitor.size().height as i32 {
+		if y - nom_h > monitor_height {
 			println!("Screen has been filled to maximum capacity");
 			num_windows = i;
 			break;
@@ -89,7 +91,10 @@ fn main() {
 		wins.push(Arc::new(window));
 
 		// If the next window would exceed the monitor width, reset x
-		x = if x + nom_w >= primary_monitor.size().width as i32 { 0 } else { x + nom_w };
+		x += nom_w;
+		if x >= monitor_width {
+			x = 0
+		}
 	}
 
 	event_loop.run(move |event, _, control_flow| {
